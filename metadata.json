@@ -1,0 +1,8 @@
+{
+  "name": "ARWEEN - National Logistics OS",
+  "description": "A government-grade, wallet-first logistics infrastructure platform implementing deterministic state machines for secure, auditable transactions between operators and drivers.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
