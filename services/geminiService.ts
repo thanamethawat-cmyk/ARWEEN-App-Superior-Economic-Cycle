@@ -10,15 +10,21 @@ export const getStrategicAdvice = async (role: UserRole, appState: AppState) => 
       : `Driver Wallet: Available ${appState.driverWallet.balanceAvailable}, Pending: ${appState.driverWallet.balancePending}, Reputation: ${appState.driverWallet.reputation}, Carbon Points: ${appState.driverWallet.carbonPoints}.`;
 
     const prompt = `
-      คุณคือ ARWEEN Private Logistics Advisor วิเคราะห์ข้อมูลสำหรับ ${role === UserRole.OPERATOR ? 'ผู้ประกอบการ' : 'คนขับ'} และให้คำแนะนำเชิงกลยุทธ์ 3 ข้อเพื่อการเติบโตของธุรกิจ
-      บริบทข้อมูล: ${context}
+      บทบาทของคุณ: ที่ปรึกษาเชิงกลยุทธ์ด้านโลจิสติกส์และการเงิน (ARWEEN Strategic Advisor)
       
-      เน้นที่:
-      1. การเพิ่มประสิทธิภาพกระแสเงินสดและภาษี
-      2. การใช้สิทธิประโยชน์สีเขียว (Carbon Credits) เพื่อลดต้นทุนหรือเพิ่มรายได้
-      3. การสร้างความน่าเชื่อถือผ่าน Trust Score เพื่อการเข้าถึงแหล่งเงินทุนธนาคาร
+      ภารกิจ: วิเคราะห์ข้อมูลและให้คำแนะนำสำหรับ "${role === UserRole.OPERATOR ? 'ผู้ประกอบการขนส่ง (Operator)' : 'พาร์ทเนอร์คนขับ (Driver)'}"
+      
+      ข้อมูลประกอบ: ${context}
+      
+      คำสั่ง: ให้คำแนะนำเชิงกลยุทธ์ 3 ข้อ เพื่อสร้างความเติบโตทางธุรกิจ
+      1. การบริหารกระแสเงินสดและภาษี
+      2. การใช้ประโยชน์จาก Carbon Credits เพื่อลดหย่อนภาษี
+      3. การสร้างเครดิต (Trust Score) เพื่อขอสินเชื่อธนาคาร
 
-      ตอบเป็นภาษาไทย สั้น กระชับ และเป็นมืออาชีพ
+      ข้อกำหนดการตอบ: 
+      - ใช้ภาษาไทยทางการ (Professional Thai) กระชับ เข้าใจง่าย
+      - ไม่ต้องเกริ่นนำ ให้เข้าประเด็นทันที
+      - ใช้คำศัพท์ที่ดูน่าเชื่อถือแบบระบบราชการสมัยใหม่
     `;
 
     const response = await ai.models.generateContent({
@@ -26,10 +32,15 @@ export const getStrategicAdvice = async (role: UserRole, appState: AppState) => 
       contents: prompt,
     });
 
+    if (!response.text) {
+      throw new Error("AI ตอบกลับด้วยข้อมูลว่างเปล่า");
+    }
+
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Advice Error:", error);
-    return "ไม่สามารถดึงข้อมูลคำแนะนำได้ในขณะนี้ โปรดตรวจสอบการเชื่อมต่อของคุณ";
+    // Throw a user-friendly error
+    throw new Error(`ไม่สามารถเชื่อมต่อระบบวิเคราะห์ AI ได้: ${error.message || 'Unknown Error'}`);
   }
 };
 
@@ -41,17 +52,18 @@ export const generateComplianceReport = async (role: UserRole, appState: AppStat
     const walletData = role === UserRole.OPERATOR ? JSON.stringify(appState.operatorWallet) : JSON.stringify(appState.driverWallet);
     
     const prompt = `
-      สร้าง "Digital Compliance Summary" ในรูปแบบรายงานทางการสำหรับ ${role === UserRole.OPERATOR ? 'ผู้ประกอบการ' : 'คนขับ'} โดยใช้ข้อมูลจาก ARWEEN Ledger และ Wallet
-      ข้อมูล Ledger: ${ledgerData}
-      ข้อมูล Wallet: ${walletData}
+      สร้าง "รายงานสรุปความถูกต้องทางดิจิทัล (Digital Compliance Summary)" ในรูปแบบเอกสารราชการสำหรับ "${role === UserRole.OPERATOR ? 'ผู้ประกอบการ' : 'พาร์ทเนอร์คนขับ'}"
       
-      รายงานต้องประกอบด้วย:
-      1. สรุปรายได้/ค่าใช้จ่ายทั้งหมด (Financial Summary)
-      2. ข้อมูลภาษีหัก ณ ที่จ่าย (Tax Proof) ที่นำส่งผ่านระบบ
-      3. ผลงานด้านสิ่งแวดล้อม (Green Achievement) และมูลค่าลดหย่อนภาษี
-      4. ลายเซ็นดิจิทัล (Simulation of Digital Signature/Hash) เพื่อยืนยันว่าข้อมูลนี้ไม่ได้ถูกแก้ไข
+      ข้อมูลธุรกรรม (Ledger): ${ledgerData}
+      ข้อมูลกระเป๋าเงิน (Wallet): ${walletData}
       
-      เขียนในรูปแบบ Markdown ภาษาไทยที่ดูเป็นทางการ พร้อมสำหรับพิมพ์หรือส่งให้บัญชี
+      โครงสร้างรายงาน (ใช้ภาษาไทยทางการ):
+      1. ส่วนหัว: สรุปสถานะทางการเงิน (Financial Summary)
+      2. หลักฐานภาษี: รายละเอียดภาษีหัก ณ ที่จ่าย (Tax Proof)
+      3. ความสำเร็จด้านสิ่งแวดล้อม: Carbon Credits และสิทธิประโยชน์ทางภาษี
+      4. การรับรองข้อมูล: จำลองลายเซ็นดิจิทัล (Digital Hash)
+      
+      รูปแบบ: Markdown ภาษาไทยที่สวยงาม เป็นทางการ พร้อมสำหรับการยื่นตรวจสอบบัญชี
     `;
 
     const response = await ai.models.generateContent({
@@ -60,10 +72,14 @@ export const generateComplianceReport = async (role: UserRole, appState: AppStat
       config: { thinkingConfig: { thinkingBudget: 2000 } }
     });
 
+    if (!response.text) {
+        throw new Error("การสร้างรายงานล้มเหลว (Empty Response)");
+    }
+
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Compliance Report Error:", error);
-    return "เกิดข้อผิดพลาดในการสร้างรายงานทางการ โปรดลองอีกครั้ง";
+    throw new Error(`การสร้างรายงานล้มเหลว: ${error.message}`);
   }
 };
 
@@ -75,19 +91,19 @@ export const validateProofOfWork = async (actionType: 'PICKUP' | 'DELIVERY', job
     // Simulate complex validation delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const isSuccess = Math.random() > 0.05; 
+    const isSuccess = Math.random() > 0.10; // 90% Success rate
     
     if (isSuccess) {
       const reasons = actionType === 'PICKUP' 
         ? [
-            "AI ยืนยัน: ตรวจพบ QR Code บนสินค้า ตรงกับ Manifest ในสัญญา",
-            "AI ยืนยัน: พิกัด GPS ตรงกับจุดรับสินค้า (ละติจูด/ลองจิจูด แม่นยำ 5 เมตร)",
-            "AI ยืนยัน: สภาพรถและตู้สินค้ามีความปลอดภัยพร้อมออกเดินทาง"
+            "AI ตรวจสอบ: พบรหัส QR Code บนสินค้า ตรงกับใบกำกับสินค้า (Manifest) ในสัญญา",
+            "AI ตรวจสอบ: พิกัด GPS สอดคล้องกับจุดรับสินค้า (ความแม่นยำสูง)",
+            "AI ตรวจสอบ: สภาพยานพาหนะผ่านเกณฑ์ความปลอดภัย"
           ]
         : [
-            "AI ยืนยัน: ตรวจสอบความสมบูรณ์ของภาพถ่ายหลักฐานส่งมอบสำเร็จ",
-            "AI ยืนยัน: พิกัดปลายทางถูกต้อง สินค้าถึงมือผู้รับตามระบุ",
-            "AI ยืนยัน: ตรวจสอบความสมบูรณ์ของบรรจุภัณฑ์ผ่าน Computer Vision"
+            "AI ตรวจสอบ: ภาพถ่ายหลักฐานการส่งมอบมีความสมบูรณ์",
+            "AI ตรวจสอบ: พิกัดปลายทางถูกต้องตามสัญญาอัจฉริยะ",
+            "AI ตรวจสอบ: บรรจุภัณฑ์อยู่ในสภาพสมบูรณ์ ไม่มีความเสียหาย"
           ];
 
       return {
@@ -97,11 +113,11 @@ export const validateProofOfWork = async (actionType: 'PICKUP' | 'DELIVERY', job
     } else {
       return {
         valid: false,
-        reason: "การตรวจสอบล้มเหลว: ภาพถ่ายไม่ชัดเจน หรือ ข้อมูลพิกัด GPS ไม่สอดคล้องกับจุดหมายปลายทางในสัญญา"
+        reason: "การตรวจสอบล้มเหลว: ภาพถ่ายไม่ชัดเจน หรือ ข้อมูลพิกัด GPS ไม่สอดคล้องกับพื้นที่ที่กำหนด"
       };
     }
   } catch (e) {
     console.error("Validation Error:", e);
-    return { valid: false, reason: "ระบบขัดข้อง: ไม่สามารถประมวลผลการตรวจสอบได้ในขณะนี้" };
+    return { valid: false, reason: "ระบบขัดข้อง: ไม่สามารถเชื่อมต่อกับ AI Node ได้ในขณะนี้ โปรดลองใหม่" };
   }
 };
